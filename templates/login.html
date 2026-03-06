@@ -12,23 +12,142 @@
     <style>
         body {
             font-family: 'Montserrat', sans-serif;
-            background-color: #f7f9fb;
+            background-color: #000;
             margin: 0;
             padding: 0;
             display: flex;
             flex-direction: column;
             min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        #stadium-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #000;
+            perspective: 800px;
+            overflow: hidden;
+            z-index: -1;
+        }
+
+        .vignette {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, transparent 40%, rgba(0, 0, 0, 0.8) 100%);
+            z-index: 50;
+            pointer-events: none;
+        }
+
+        .sky-city-bg {
+            width: 100%;
+            height: 35%;
+            position: absolute;
+            top: 0;
+            background: linear-gradient(to bottom, #010103 0%, #050515 100%);
+            z-index: 1;
+        }
+
+        .city-silhouette {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 50px;
+            background: #000;
+            clip-path: polygon(0% 100%, 0% 50%, 5% 20%, 10% 50%, 15% 10%, 25% 50%, 40% 5%, 50% 50%, 60% 0%, 75% 50%, 85% 10%, 100% 50%, 100% 100%);
+        }
+
+        .goal-container {
+            position: absolute;
+            top: 35%;
+            left: 50%;
+            transform: translate(-50%, -100%);
+            z-index: 20;
+        }
+
+        .goal {
+            width: 160px;
+            height: 80px;
+            border: 4px solid #fff;
+            border-bottom: none;
+            background-image:
+                repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.2) 0px, rgba(255, 255, 255, 0.2) 1px, transparent 1px, transparent 6px),
+                repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.2) 0px, rgba(255, 255, 255, 0.2) 1px, transparent 1px, transparent 6px);
+        }
+
+        .pitch-perspective-wrapper {
+            position: absolute;
+            top: 35%;
+            width: 100%;
+            height: 65%;
+            z-index: 2;
+            overflow: hidden;
+            transform: rotateX(60deg);
+            transform-origin: top;
+        }
+
+        .pitch-moving-texture {
+            width: 100%;
+            height: 300%;
+            position: absolute;
+            top: 0;
+            background: linear-gradient(to bottom,
+                    #1a5900 0%, #1a5900 48.5%,
+                    #ffffff 48.5%, #ffffff 50%,
+                    #40772b 50%, #40772b 98.5%,
+                    #ffffff 98.5%, #ffffff 100%);
+            background-size: 100% 800px;
+            animation: move-pitch 12s linear infinite;
+        }
+
+        @keyframes move-pitch {
+            0% {
+                transform: translateY(-800px);
+            }
+
+            100% {
+                transform: translateY(0);
+            }
+        }
+
+        .stadium-light {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle, #fff 0%, rgba(150, 220, 255, 0.6) 40%, transparent 70%);
+            z-index: 5;
+            animation: flicker 4s infinite alternate ease-in-out;
+        }
+
+        @keyframes flicker {
+
+            0%,
+            100% {
+                opacity: 0.4;
+                transform: scale(0.9);
+            }
+
+            50% {
+                opacity: 1;
+                transform: scale(1.1);
+            }
         }
 
         .sponsor-banner-container {
             width: 100%;
-            height: 500px;
-            background-color: #eee;
+            height: 150px;
+            background-color: transparent;
             overflow: hidden;
             display: flex;
             justify-content: center;
             align-items: center;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            position: relative;
+            z-index: 10;
         }
 
         .sponsor-banner-container img {
@@ -43,6 +162,8 @@
             justify-content: center;
             align-items: center;
             padding: 20px;
+            position: relative;
+            z-index: 10;
         }
 
         .login-card {
@@ -138,6 +259,19 @@
 
 <body>
 
+    <div id="stadium-container">
+        <div class="vignette"></div>
+        <div class="sky-city-bg">
+            <div class="city-silhouette"></div>
+        </div>
+        <div class="goal-container">
+            <div class="goal"></div>
+        </div>
+        <div class="pitch-perspective-wrapper">
+            <div class="pitch-moving-texture"></div>
+        </div>
+    </div>
+
     <div class="sponsor-banner-container">
         <img src="/static/banner/login_sponsor.jpg?v={{ cache_buster }}" alt="Sponsor Banner"
             onerror="this.onerror=null; this.src='https://via.placeholder.com/1920x120?text=SPONSOR+BANNER';">
@@ -186,6 +320,22 @@
     </div>
 
     <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const stadium = document.getElementById('stadium-container');
+            if (stadium) {
+                for (let i = 0; i < 8; i++) {
+                    const light = document.createElement('div');
+                    light.className = 'stadium-light';
+                    const size = Math.random() * 80 + 40;
+                    light.style.width = light.style.height = `${size}px`;
+                    light.style.left = `${Math.random() * 95}%`;
+                    light.style.top = `${Math.random() * 30}%`;
+                    light.style.animationDelay = `${Math.random() * 4}s`;
+                    stadium.appendChild(light);
+                }
+            }
+        });
+
         function toggleAuth() {
             const loginSec = document.getElementById('login-section');
             const regSec = document.getElementById('register-section');
