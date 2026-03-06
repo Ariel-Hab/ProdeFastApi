@@ -357,63 +357,11 @@ async def ver_fixture(request: Request, db: Session = Depends(get_db)):
             
             fixture_knockout.append(p_copy)
                 
-        # Calcular Podium (1ro, 2do, 3ro)
-        podio = {"primero": None, "segundo": None, "tercero": None}
-        
-        # 1ro y 2do de la FINAL (P104)
-        final_off = resultados_dict.get("P104")
-        if final_off and final_off.get("g1") is not None:
-            g1, g2 = final_off.get("g1"), final_off.get("g2")
-            winner_pen = final_off.get("winner")
-            
-            # Obtener nombres de equipos de las asignaciones de admin
-            asig_final = knockout_asignaciones.get("P104", {})
-            t1_name = asig_final.get("t1", "TBD")
-            t2_name = asig_final.get("t2", "TBD")
-            b1 = asig_final.get("bandera1", "🏳️")
-            b2 = asig_final.get("bandera2", "🏳️")
-            
-            if winner_pen:
-                if winner_pen == t1_name:
-                    podio["primero"] = {"name": t1_name, "flag": b1}
-                    podio["segundo"] = {"name": t2_name, "flag": b2}
-                else:
-                    podio["primero"] = {"name": t2_name, "flag": b2}
-                    podio["segundo"] = {"name": t1_name, "flag": b1}
-            else:
-                if g1 > g2:
-                    podio["primero"] = {"name": t1_name, "flag": b1}
-                    podio["segundo"] = {"name": t2_name, "flag": b2}
-                elif g2 > g1:
-                    podio["primero"] = {"name": t2_name, "flag": b2}
-                    podio["segundo"] = {"name": t1_name, "flag": b1}
-
-        # 3ro del TERCER PUESTO (P103)
-        tercer_off = resultados_dict.get("P103")
-        if tercer_off and tercer_off.get("g1") is not None:
-            g1, g2 = tercer_off.get("g1"), tercer_off.get("g2")
-            winner_pen = tercer_off.get("winner")
-            
-            asig_3ro = knockout_asignaciones.get("P103", {})
-            t1_name = asig_3ro.get("t1", "TBD")
-            t2_name = asig_3ro.get("t2", "TBD")
-            b1 = asig_3ro.get("bandera1", "🏳️")
-            b2 = asig_3ro.get("bandera2", "🏳️")
-            
-            if winner_pen:
-                podio["tercero"] = {"name": winner_pen, "flag": b1 if winner_pen == t1_name else b2}
-            else:
-                if g1 > g2:
-                    podio["tercero"] = {"name": t1_name, "flag": b1}
-                elif g2 > g1:
-                    podio["tercero"] = {"name": t2_name, "flag": b2}
-
         return templates.TemplateResponse("fixture.html", {
             "request": request,
             "username": username,
             "fixture_grupos": fixture_grupos,
             "fixture_knockout": fixture_knockout,
-            "podio": podio,
             "sidebar_data": get_sidebar_data(username, db)
         })
     except Exception as e:
@@ -429,95 +377,31 @@ async def ver_ranking(request: Request, db: Session = Depends(get_db)):
     if not username:
         return RedirectResponse(url="/login", status_code=303)
         
-    # Extraer todos los usuarios ordenados por puntos descendente
-    from database.models import Usuario
-    usuarios_raw = db.query(Usuario).order_by(Usuario.puntos_totales.desc()).all()
+    # Extraer todos los usuarios ordenados por puntos descendente (excluyendo admins si se desea, aquí los metemos todos)
+    from database.models import Usuario, Premio
+    usuarios_ordenados = db.query(Usuario).order_by(Usuario.puntos_totales.desc()).all()
     
-    # Procesar lista para anonimización
-    usuarios_procesados = []
-    for i, u in enumerate(usuarios_raw, 1):
-        is_self = (u.username == username)
-        display_name = u.username if is_self else f"Jugador{i:02d}"
-        
-        usuarios_procesados.append({
-            "username": u.username,
-            "display_name": display_name,
-            "puntos_totales": u.puntos_totales or 0,
-            "is_admin": u.is_admin,
-            "is_self": is_self
-        })
+    premios = db.query(Premio).order_by(Premio.orden.asc()).all()
     
-    # Extraer configuración de ranking
-    conf_ranking = db.query(ConfigGlobal).filter(ConfigGlobal.clave == "ranking_config").first()
-    import json
-    ranking_config = json.loads(conf_ranking.valor) if conf_ranking else {
-        "title": "🏆 Clasificación General",
-        "desc_title": "🚀 ¡La Carrera por la Gloria! ⚽",
-        "desc_body": "¡Acá se definen los campeones del Prode! Peleá por los premios más zarpados: desde un **iPhone 15 Pro** o una **MacBook** pal' 1°, hasta la **PS5 Slim**, **iPads** o la **Camiseta de la Scaloneta** para los que siguen. ¡Mucha suerte y que gane el mejor! 🏆✨"
-    }
-    
-    # Extraer cache buster
-    conf_cache = db.query(ConfigGlobal).filter(ConfigGlobal.clave == "cache_buster").first()
-    cache_buster = conf_cache.valor if conf_cache else "1"
-
     return templates.TemplateResponse("ranking.html", {
         "request": request,
         "username": username,
-        "usuarios": usuarios_procesados,
+        "usuarios": usuarios_ordenados,
         "sidebar_data": get_sidebar_data(username, db),
-        "ranking_config": ranking_config,
-        "cache_buster": cache_buster
+        "premios": premios
     })
 
 @router.get("/reglas", response_class=HTMLResponse)
 async def ver_reglas(request: Request, db: Session = Depends(get_db)):
-    """Renderiza la página de reglamento y premios con datos dinámicos."""
+    """Renderiza la página estática de reglamento y premios."""
     username = get_current_user(request)
     if not username:
         return RedirectResponse(url="/login", status_code=303)
         
-    from database.models import ConfigGlobal
-    import json
-    conf_reglas = db.query(ConfigGlobal).filter(ConfigGlobal.clave == "reglas_dinamicas").first()
-    
-    if not conf_reglas:
-        reglas_dinamicas = [
-            {
-                "title": "Puntajes Regulares",
-                "items": [
-                    {"icon": "🎯", "title": "Marcador Exacto (6 Puntos)", "desc": "Si aciertas exactamente los goles que hace cada equipo, ganas el máximo de puntos. (Ej: Predices 2-1 y el partido sale 2-1)."},
-                    {"icon": "🤝", "title": "Acierto de Tendencia (3 Puntos)", "desc": "Si aciertas quién gana (o el empate) pero no el resultado exacto, sumas 3 puntos. (Ej: Predices 2-0 y el partido sale 1-0)."},
-                    {"icon": "⚖️", "title": "Bonus de Penales (+1 Punto)", "desc": "En caso de acertar un empate durante las rondas KO, si también adivinas quién gana en los tiros desde el punto penal, obtienes un punto extra."},
-                    {"icon": "✖️", "title": "Multiplicadores de Fase", "desc": "Los puntos base se multiplican según la importancia del partido: Grupos (x1), Dieciseisavos (x1.25), Octavos (x1.5), Cuartos (x2.0), Semifinales (x3.0), Final (x4.0)."}
-                ]
-            },
-            {
-                "title": "Premios Oficiales 🏆",
-                "items": [
-                    {"icon": "🥇", "title": "1° Puesto", "desc": "Apple iPhone 16 Pro Max + Trofeo Oficial del Torneo."},
-                    {"icon": "🥈", "title": "2° Puesto", "desc": "PlayStation 5 Slim + Medalla de Plata."},
-                    {"icon": "🥉", "title": "3er Puesto", "desc": "Camiseta Oficial Argentina 3 Estrellas + Medalla de Bronce."}
-                ]
-            }
-        ]
-        # Opcional: Podríamos guardarlo aquí también, pero con devolverlo basta para la vista.
-        # Para consistencia, lo guardamos.
-        nueva_conf = ConfigGlobal(clave="reglas_dinamicas", valor=json.dumps(reglas_dinamicas))
-        db.add(nueva_conf)
-        db.commit()
-    else:
-        reglas_dinamicas = json.loads(conf_reglas.valor)
-
-    # Extraer cache buster
-    conf_cache = db.query(ConfigGlobal).filter(ConfigGlobal.clave == "cache_buster").first()
-    cache_buster = conf_cache.valor if conf_cache else "1"
-
     return templates.TemplateResponse("reglas.html", {
         "request": request,
         "username": username,
-        "sidebar_data": get_sidebar_data(username, db),
-        "reglas_dinamicas": reglas_dinamicas,
-        "cache_buster": cache_buster
+        "sidebar_data": get_sidebar_data(username, db)
     })
 
 @router.get("/perfil", response_class=HTMLResponse)
@@ -527,10 +411,12 @@ async def ver_perfil(request: Request, db: Session = Depends(get_db)):
     if not username:
         return RedirectResponse(url="/login", status_code=303)
         
-    from database.models import Usuario, DatosOficiales
+    from database.models import Usuario, DatosOficiales, Premio
     from core.scoring import ScoringEngine
     
     usuario = db.query(Usuario).filter(Usuario.username == username).first()
+    
+    premios = db.query(Premio).order_by(Premio.orden.asc()).all()
     
     # Construir historial
     historial = []
@@ -591,5 +477,6 @@ async def ver_perfil(request: Request, db: Session = Depends(get_db)):
         "username": username,
         "usuario": usuario,
         "historial": historial,
-        "sidebar_data": get_sidebar_data(username, db)
+        "sidebar_data": get_sidebar_data(username, db),
+        "premios": premios
     })

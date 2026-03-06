@@ -9,13 +9,9 @@ router = APIRouter()
 templates = Jinja2Templates(directory="templates")
 
 @router.get("/login", response_class=HTMLResponse)
-async def login_page(request: Request, db: Session = Depends(get_db)):
+async def login_page(request: Request):
     """Renderiza la pantalla de Login."""
-    from database.models import ConfigGlobal
-    import time
-    conf_cache = db.query(ConfigGlobal).filter(ConfigGlobal.clave == "cache_buster").first()
-    cache_buster = conf_cache.valor if conf_cache else str(int(time.time()))
-    return templates.TemplateResponse("login.html", {"request": request, "cache_buster": cache_buster})
+    return templates.TemplateResponse("login.html", {"request": request})
 
 @router.post("/login", response_class=HTMLResponse)
 async def login_process(
@@ -45,32 +41,6 @@ async def login_process(
 async def logout(response: Response):
     response = RedirectResponse(url="/login", status_code=303)
     response.delete_cookie("session_token")
-    response.headers["HX-Redirect"] = "/login"
-    return response
-
-@router.post("/register", response_class=HTMLResponse)
-async def register_process(
-    request: Request,
-    response: Response,
-    username: str = Form(...),
-    password: str = Form(...),
-    db: Session = Depends(get_db)
-):
-    """Procesa el registro de un nuevo usuario."""
-    # Verificar si el usuario ya existe
-    existente = db.query(Usuario).filter(Usuario.username == username).first()
-    if existente:
-        return f'<div style="color: red; margin-top: 10px;">El nombre de usuario ya está en uso.</div>'
-    
-    # Crear nuevo usuario
-    nuevo_usuario = Usuario(username=username, password=password)
-    db.add(nuevo_usuario)
-    db.commit()
-    
-    # Iniciar sesión automáticamente
-    response = HTMLResponse(content="")
-    response.set_cookie(key="session_token", value=username, httponly=True, max_age=86400)
-    response.headers["HX-Redirect"] = "/"
     return response
 
 # Dependencia para requerir autenticación en otras rutas

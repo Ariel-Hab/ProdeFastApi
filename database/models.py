@@ -30,3 +30,13 @@ class DatosOficiales(Base):
     id = Column(Integer, primary_key=True, index=True)
     match_id = Column(String, unique=True, index=True)
     datos = Column(String) # Goles, ganador, penales, etc.
+
+class Premio(Base):
+    __tablename__ = "premios"
+
+    id = Column(Integer, primary_key=True, index=True)
+    nombre = Column(String)
+    descripcion = Column(String)
+    puntos_requeridos = Column(Integer, default=0)
+    imagen_url = Column(String) # Rango de imagen: /static/premios/1.jpg
+    orden = Column(Integer, default=0) # Para ordenar en la UI

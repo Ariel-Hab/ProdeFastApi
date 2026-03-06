@@ -32,12 +32,14 @@ def simulate_phase(db, phase_name, pepe_hit_rate=0.10, force_winner="Argentina")
         if t1 == 'TBD' or t2 == 'TBD':
             continue
         
-        # Forzar victoria de Argentina
+        # Forzar victoria de Argentina (o del force_winner)
         if t1 == force_winner or t2 == force_winner:
             if t1 == force_winner:
-                g1, g2 = 2, 0
+                g1 = random.randint(1, 4)
+                g2 = random.randint(0, g1 - 1)
             else:
-                g1, g2 = 0, 2
+                g2 = random.randint(1, 4)
+                g1 = random.randint(0, g2 - 1)
             winner = None
         else:
             g1, g2 = random.randint(0, 3), random.randint(0, 3)
@@ -152,7 +154,14 @@ def simulate_phase(db, phase_name, pepe_hit_rate=0.10, force_winner="Argentina")
 def main():
     db = SessionLocal()
     try:
-        phases = ["Dieciseisavos", "Octavos", "Cuartos", "Semifinales", "Tercer Puesto", "Final"]
+        # Check if Argentina is actually mapped
+        conf_asig = db.query(ConfigGlobal).filter(ConfigGlobal.clave == "knockout_asignaciones").first()
+        if conf_asig:
+           asig_str = conf_asig.valor
+           if "Argentina" not in asig_str:
+               print("Atención: Argentina no está en las llaves, buscaré al equipo que esté en Cuartos para forzarlo...")
+               
+        phases = ["Cuartos", "Semifinales", "Tercer Puesto", "Final"]
         for p in phases:
             simulate_phase(db, p, 0.10, "Argentina")
             
@@ -162,7 +171,7 @@ def main():
         
         pepe_final = db.query(Usuario).filter(Usuario.username == "pepe").first()
         print(f"Puntaje total final de Pepe: {pepe_final.puntos_totales}")
-        print("✅ Simulación completa finalizada.")
+        print("✅ Mundial completado. ¡Argentina campeón (si estaba en llaves)!")
     finally:
         db.close()
 

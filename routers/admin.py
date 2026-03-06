@@ -82,51 +82,9 @@ async def admin_dashboard(request: Request, db: Session = Depends(get_db)):
     conf_fin = db.query(ConfigGlobal).filter(ConfigGlobal.clave == "partidos_finalizados").first()
     partidos_finalizados = json.loads(conf_fin.valor) if conf_fin else []
 
-    # Extraer configuración de ranking
-    conf_ranking = db.query(ConfigGlobal).filter(ConfigGlobal.clave == "ranking_config").first()
-    if not conf_ranking:
-        ranking_config = {
-            "title": "🏆 Clasificación General",
-            "desc_title": "🚀 ¡La Carrera por la Gloria! ⚽",
-            "desc_body": "¡Acá se definen los campeones del Prode! Peleá por los premios más zarpados: desde un **iPhone 15 Pro** o una **MacBook** pal' 1°, hasta la **PS5 Slim**, **iPads** o la **Camiseta de la Scaloneta** para los que siguen. ¡Mucha suerte y que gane el mejor! 🏆✨"
-        }
-        nueva_conf = ConfigGlobal(clave="ranking_config", valor=json.dumps(ranking_config))
-        db.add(nueva_conf)
-        db.commit()
-    else:
-        ranking_config = json.loads(conf_ranking.valor)
-
-    # Extraer configuración de reglamentos
-    conf_reglas = db.query(ConfigGlobal).filter(ConfigGlobal.clave == "reglas_dinamicas").first()
-    if not conf_reglas:
-        reglas_dinamicas = [
-            {
-                "title": "Puntajes Regulares",
-                "items": [
-                    {"icon": "🎯", "title": "Marcador Exacto (6 Puntos)", "desc": "Si aciertas exactamente los goles que hace cada equipo, ganas el máximo de puntos. (Ej: Predices 2-1 y el partido sale 2-1)."},
-                    {"icon": "🤝", "title": "Acierto de Tendencia (3 Puntos)", "desc": "Si aciertas quién gana (o el empate) pero no el resultado exacto, sumas 3 puntos. (Ej: Predices 2-0 y el partido sale 1-0)."},
-                    {"icon": "⚖️", "title": "Bonus de Penales (+1 Punto)", "desc": "En caso de acertar un empate durante las rondas KO, si también adivinas quién gana en los tiros desde el punto penal, obtienes un punto extra."},
-                    {"icon": "✖️", "title": "Multiplicadores de Fase", "desc": "Los puntos base se multiplican según la importancia del partido: Grupos (x1), Dieciseisavos (x1.25), Octavos (x1.5), Cuartos (x2.0), Semifinales (x3.0), Final (x4.0)."}
-                ]
-            },
-            {
-                "title": "Premios Oficiales 🏆",
-                "items": [
-                    {"icon": "🥇", "title": "1° Puesto", "desc": "Apple iPhone 16 Pro Max + Trofeo Oficial del Torneo."},
-                    {"icon": "🥈", "title": "2° Puesto", "desc": "PlayStation 5 Slim + Medalla de Plata."},
-                    {"icon": "🥉", "title": "3er Puesto", "desc": "Camiseta Oficial Argentina 3 Estrellas + Medalla de Bronce."}
-                ]
-            }
-        ]
-        nueva_conf = ConfigGlobal(clave="reglas_dinamicas", valor=json.dumps(reglas_dinamicas))
-        db.add(nueva_conf)
-        db.commit()
-    else:
-        reglas_dinamicas = json.loads(conf_reglas.valor)
-
-    # Extraer cache buster
-    conf_cache = db.query(ConfigGlobal).filter(ConfigGlobal.clave == "cache_buster").first()
-    cache_buster = conf_cache.valor if conf_cache else "1"
+    # Extraer premios
+    from database.models import Premio
+    premios = db.query(Premio).order_by(Premio.orden.asc()).all()
 
     return templates.TemplateResponse("admin.html", {
         "request": request, 
@@ -138,69 +96,8 @@ async def admin_dashboard(request: Request, db: Session = Depends(get_db)):
         "knockout_asignaciones": knockout_asignaciones,
         "partidos_finalizados": partidos_finalizados,
         "countries": COUNTRIES,
-        "ranking_config": ranking_config,
-        "reglas_dinamicas": reglas_dinamicas,
-        "cache_buster": cache_buster
+        "premios": premios
     })
-
-@router.post("/reglas/save")
-async def save_reglas(request: Request, db: Session = Depends(get_db)):
-    """Guarda la configuración del reglamento enviada como JSON."""
-    username = get_current_user(request)
-    if username != "admin":
-        return RedirectResponse(url="/login", status_code=303)
-    
-    try:
-        body = await request.body()
-        data = json.loads(body)
-        
-        from database.models import ConfigGlobal
-        conf = db.query(ConfigGlobal).filter(ConfigGlobal.clave == "reglas_dinamicas").first()
-        if conf:
-            conf.valor = json.dumps(data)
-        else:
-            conf = ConfigGlobal(clave="reglas_dinamicas", valor=json.dumps(data))
-            db.add(conf)
-            
-        db.commit()
-        return {"status": "success", "message": "Reglamento guardado correctamente"}
-    except Exception as e:
-        print(f"Error guardando reglas: {e}")
-        return {"status": "error", "message": str(e)}
-
-@router.post("/reset-scores")
-async def reset_scores(request: Request, db: Session = Depends(get_db)):
-    """Borra todos los resultados oficiales y resetea los puntos de todos los usuarios."""
-    username = get_current_user(request)
-    if username != "admin":
-        return RedirectResponse(url="/login", status_code=303)
-    
-    try:
-        from database.models import DatosOficiales, Usuario, ConfigGlobal
-        
-        # 1. Borrar todos los resultados oficiales
-        db.query(DatosOficiales).delete()
-        
-        # 2. Limpiar listas de partidos cerrados y finalizados
-        conf_cerrados = db.query(ConfigGlobal).filter(ConfigGlobal.clave == "partidos_cerrados").first()
-        if conf_cerrados:
-            conf_cerrados.valor = json.dumps([])
-            
-        conf_fin = db.query(ConfigGlobal).filter(ConfigGlobal.clave == "partidos_finalizados").first()
-        if conf_fin:
-            conf_fin.valor = json.dumps([])
-
-        # 4. Limpiar asignaciones de knockout (opcional, pero recomendado para reset total)
-        conf_asig = db.query(ConfigGlobal).filter(ConfigGlobal.clave == "knockout_asignaciones").first()
-        if conf_asig:
-            conf_asig.valor = json.dumps({})
-            
-        db.commit()
-        return {"status": "success", "message": "Todos los puntajes y resultados han sido reseteados."}
-    except Exception as e:
-        db.rollback()
-        print(f"Error en reset_scores: {e}")
-        return {"status": "error", "message": str(e)}
 
 @router.post("/config/fase", response_class=HTMLResponse)
 async def update_fase(
@@ -243,51 +140,31 @@ async def update_fase(
 @router.post("/config/banner", response_class=HTMLResponse)
 async def upload_banner(
     request: Request,
-    slot: str = Form(...),
-    image: UploadFile = File(...),
-    db: Session = Depends(get_db)
+    slot: int = Form(...),
+    image: UploadFile = File(...)
 ):
-    """Sube y reemplaza un banner de sponsor o premio."""
+    """Sube y reemplaza un banner de la página de inicio."""
     username = get_current_user(request)
     if username != "admin":
         return "<div style='color:red;'>Acceso denegado</div>"
         
-    if not image.filename.lower().endswith(('.png', '.jpg', '.jpeg', '.webp', '.gif')):
-        return "<div style='color:red;'>Formato de imagen no soportado. Usa JPG o PNG.</div>"
-
-    # Determinar la ruta de destino según el slot
-    file_path = ""
-    if slot == "sponsor":
-        os.makedirs("static/banner", exist_ok=True)
-        file_path = "static/banner/sponsor_banner.jpg"
-    elif slot == "login_sponsor":
-        os.makedirs("static/banner", exist_ok=True)
-        file_path = "static/banner/login_sponsor.jpg"
-    elif slot.startswith("prize_"):
-        os.makedirs("static/img/prizes", exist_ok=True)
-        file_path = f"static/img/prizes/{slot}.png"
-    else:
+    if slot not in [1, 2, 3, 4]:
         return "<div style='color:red;'>Slot inválido</div>"
+        
+    if not image.filename.lower().endswith(('.png', '.jpg', '.jpeg', '.webp', '.gif')):
+        return "<div style='color:red;'>Formato de imagen no soportado.</div>"
+
+    # Define the path to save the banner
+    banner_dir = "static/banner"
+    os.makedirs(banner_dir, exist_ok=True)
+    file_path = os.path.join(banner_dir, f"slide{slot}.jpg")
     
     try:
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(image.file, buffer)
-            
-        # Actualizar el cache_buster
-        from database.models import ConfigGlobal
-        import time
-        import json
-        conf_cache = db.query(ConfigGlobal).filter(ConfigGlobal.clave == "cache_buster").first()
-        if not conf_cache:
-            conf_cache = ConfigGlobal(clave="cache_buster", valor=str(int(time.time())))
-            db.add(conf_cache)
-        else:
-            conf_cache.valor = str(int(time.time()))
-        db.commit()
-
         return f'''
             <div style="color: green; font-weight: bold;">
-                ✅ ¡Imagen subida y caché actualizada!
+                ✅ Banner {slot} actualizado correctamente.
             </div>
         '''
     except Exception as e:
@@ -297,6 +174,71 @@ async def upload_banner(
             </div>
         '''
 
+@router.post("/config/banner_login", response_class=HTMLResponse)
+async def upload_login_banner(
+    request: Request,
+    image: UploadFile = File(...)
+):
+    """Sube y reemplaza el banner del sponsor del login."""
+    username = get_current_user(request)
+    if username != "admin":
+        return "<div style='color:red;'>Acceso denegado</div>"
+        
+    if not image.filename.lower().endswith(('.png', '.jpg', '.jpeg', '.webp', '.gif')):
+        return "<div style='color:red;'>Formato de imagen no soportado.</div>"
+
+    banner_dir = "static/banner"
+    os.makedirs(banner_dir, exist_ok=True)
+    file_path = os.path.join(banner_dir, "login_sponsor.jpg")
+    
+    try:
+        import shutil
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(image.file, buffer)
+        return f'''
+            <div style="color: green; font-weight: bold; padding: 5px;">
+                ✅ Banner de Login actualizado.
+            </div>
+        '''
+    except Exception as e:
+        return f'''
+            <div style="color: red; font-weight: bold; padding: 5px;">
+                ❌ Error: {str(e)}
+            </div>
+        '''
+
+@router.post("/config/banner_footer", response_class=HTMLResponse)
+async def upload_footer_banner(
+    request: Request,
+    image: UploadFile = File(...)
+):
+    """Sube y reemplaza el banner de publicidad del footer."""
+    username = get_current_user(request)
+    if username != "admin":
+        return "<div style='color:red;'>Acceso denegado</div>"
+        
+    if not image.filename.lower().endswith(('.png', '.jpg', '.jpeg', '.webp', '.gif')):
+        return "<div style='color:red;'>Formato de imagen no soportado.</div>"
+
+    banner_dir = "static/banner"
+    os.makedirs(banner_dir, exist_ok=True)
+    file_path = os.path.join(banner_dir, "PUBLICIDAD_PRODE.png")
+    
+    try:
+        import shutil
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(image.file, buffer)
+        return f'''
+            <div style="color: green; font-weight: bold; padding: 5px;">
+                ✅ Banner de Footer actualizado.
+            </div>
+        '''
+    except Exception as e:
+        return f'''
+            <div style="color: red; font-weight: bold; padding: 5px;">
+                ❌ Error: {str(e)}
+            </div>
+        '''
 
 @router.post("/match/save", response_class=HTMLResponse)
 async def save_match_result(
@@ -483,112 +425,193 @@ async def finish_knockout_match(
         </div>
     '''
 
-@router.post("/ranking/text", response_class=HTMLResponse)
-async def update_ranking_text(
+@router.post("/premio/add", response_class=HTMLResponse)
+async def add_premio(
     request: Request,
-    title: str = Form(...),
-    desc_title: str = Form(...),
-    desc_body: str = Form(...),
-    db: Session = Depends(get_db)
-):
-    """Actualiza el texto del ranking desde el panel admin."""
-    username = get_current_user(request)
-    if username != "admin":
-        return "<div style='color:red;'>Acceso denegado</div>"
-        
-    from database.models import ConfigGlobal
-    import json
-    
-    conf = db.query(ConfigGlobal).filter(ConfigGlobal.clave == "ranking_config").first()
-    ranking_config = {
-        "title": title,
-        "desc_title": desc_title,
-        "desc_body": desc_body
-    }
-    
-    if not conf:
-        conf = ConfigGlobal(clave="ranking_config", valor=json.dumps(ranking_config))
-        db.add(conf)
-    else:
-        conf.valor = json.dumps(ranking_config)
-    
-    db.commit()
-    
-    return '<div style="color: green; font-weight: bold;">✅ Texto del ranking actualizado.</div>'
-
-@router.post("/ranking/prize-image", response_class=HTMLResponse)
-async def upload_prize_image(
-    request: Request,
-    category: int = Form(...),
-    slot: int = Form(...),
+    nombre: str = Form(...),
+    descripcion: str = Form(...),
+    puntos_requeridos: int = Form(...),
+    orden: int = Form(0),
     image: UploadFile = File(...),
     db: Session = Depends(get_db)
 ):
-    """Sube una imagen de premio para el ranking."""
+    """Agrega un nuevo premio con su imagen."""
     username = get_current_user(request)
     if username != "admin":
-        return "<div style='color:red;'>Acceso denegado</div>"
+        return "<div class='alert alert-danger'>Acceso denegado</div>"
         
-    if not image.filename.lower().endswith(('.png', '.jpg', '.jpeg', '.webp')):
-        return "<div style='color:red;'>Formato no soportado.</div>"
-
-    prize_dir = "static/img/prizes"
-    os.makedirs(prize_dir, exist_ok=True)
-    # Ejemplo: prize_1_1.png, prize_2_1.png, etc.
-    file_path = os.path.join(prize_dir, f"prize_{category}_{slot}.png")
-    
     try:
+        from database.models import Premio
+        import time
+        import os
+        import shutil
+        
+        # Validar imagen
+        if not image.filename.lower().endswith(('.png', '.jpg', '.jpeg', '.webp', '.gif')):
+            return "<div style='color:red;'>Formato de imagen no soportado.</div>"
+            
+        # Guardar imagen con nombre único
+        premios_dir = "static/premios"
+        os.makedirs(premios_dir, exist_ok=True)
+        ext = image.filename.split(".")[-1]
+        timestamp = int(time.time())
+        filename = f"premio_{timestamp}.{ext}"
+        file_path = os.path.join(premios_dir, filename)
+        
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(image.file, buffer)
-        
-        # update cache buster
-        from database.models import ConfigGlobal
-        import time
-        buster = db.query(ConfigGlobal).filter(ConfigGlobal.clave == "cache_buster").first()
-        if not buster:
-            buster = ConfigGlobal(clave="cache_buster", valor=str(int(time.time())))
-            db.add(buster)
-        else:
-            buster.valor = str(int(time.time()))
+            
+        # Crear registro en BD
+        nuevo_premio = Premio(
+            nombre=nombre,
+            descripcion=descripcion,
+            puntos_requeridos=puntos_requeridos,
+            imagen_url=f"/{file_path}",
+            orden=orden
+        )
+        db.add(nuevo_premio)
         db.commit()
-
-        return f'<div style="color: green; font-size: 0.8rem;">✅ Premio {category}-{slot} OK.</div>'
+        
+        return '''
+            <div style="background-color: #d1e7dd; color: #0f5132; padding: 10px; border-radius: 5px; margin-top: 10px;">
+                ✅ Premio agregado exitosamente. Actualiza la página para verlo.
+            </div>
+            <script>setTimeout(() => window.location.reload(), 1500);</script>
+        '''
     except Exception as e:
-        return f'<div style="color: red; font-size: 0.8rem;">❌ Error: {str(e)}</div>'
+        return f"<div style='color:red;'>Error al guardar premio: {str(e)}</div>"
 
-@router.post("/ranking/sponsor-banner", response_class=HTMLResponse)
-async def upload_sponsor_banner(
+@router.post("/premio/delete", response_class=HTMLResponse)
+async def delete_premio(
     request: Request,
-    image: UploadFile = File(...),
+    premio_id: int = Form(...),
     db: Session = Depends(get_db)
 ):
-    """Sube el banner de sponsors para el ranking."""
+    """Elimina un premio y su imagen."""
     username = get_current_user(request)
     if username != "admin":
-        return "<div style='color:red;'>Acceso denegado</div>"
+        return "<div class='alert alert-danger'>Acceso denegado</div>"
         
-    if not image.filename.lower().endswith(('.png', '.jpg', '.jpeg', '.webp')):
-        return "<div style='color:red;'>Formato no soportado.</div>"
-
-    banner_dir = "static/banner"
-    os.makedirs(banner_dir, exist_ok=True)
-    file_path = os.path.join(banner_dir, "sponsor_banner.jpg")
-    
     try:
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(image.file, buffer)
-
-        # update cache buster
-        from database.models import ConfigGlobal
-        import time
-        buster = db.query(ConfigGlobal).filter(ConfigGlobal.clave == "cache_buster").first()
-        if not buster:
-            buster = ConfigGlobal(clave="cache_buster", valor=str(int(time.time())))
-            db.add(buster)
-        else:
-            buster.valor = str(int(time.time()))
+        from database.models import Premio
+        premio = db.query(Premio).filter(Premio.id == premio_id).first()
+        if not premio:
+            return "<div style='color:red;'>Premio no encontrado.</div>"
+            
+        # Intentar borrar el archivo de imagen
+        import os
+        image_path = premio.imagen_url.lstrip("/") # remover slash inicial para ruta local
+        if os.path.exists(image_path):
+            os.remove(image_path)
+            
+        db.delete(premio)
         db.commit()
         
-        return '<div style="color: green; font-weight: bold;">✅ Banner de Sponsors actualizado exitosamente.</div>'
+        return '''
+            <div style="background-color: #d1e7dd; color: #0f5132; padding: 10px; border-radius: 5px; margin-top: 10px;">
+                ✅ Premio eliminado correctamente.
+            </div>
+            <script>setTimeout(() => window.location.reload(), 1000);</script>
+        '''
     except Exception as e:
-        return f'<div style="color: red; font-weight: bold;">❌ Error: {str(e)}</div>'
+        return f"<div style='color:red;'>Error al eliminar premio: {str(e)}</div>"
+
+@router.post("/reiniciar_oficiales", response_class=HTMLResponse)
+async def reiniciar_oficiales(request: Request, db: Session = Depends(get_db)):
+    """Reinicia SOLO los resultados oficiales del torneo, dejando intactas las predicciones de los usuarios."""
+    username = get_current_user(request)
+    if username != "admin":
+        return "<div class='alert alert-danger'>Acceso denegado</div>"
+        
+    try:
+        from database.models import DatosOficiales, Usuario, ConfigGlobal
+        
+        # 1. Borrar todos los resultados oficiales
+        db.query(DatosOficiales).delete()
+        
+        # 2. Restablecer los puntos de los usuarios a cero
+        db.query(Usuario).update({Usuario.puntos_totales: 0})
+        
+        # 3. Restablecer estados de fases y partidos cerrados en ConfigGlobal
+        estados_iniciales = {"Grupos": True, "Dieciseisavos": False, "Octavos": False, "Cuartos": False, "Semis": False, "Finales": False}
+        import json
+        
+        conf_fases = db.query(ConfigGlobal).filter(ConfigGlobal.clave == "fases_estado").first()
+        if conf_fases:
+            conf_fases.valor = json.dumps(estados_iniciales)
+            
+        conf_cerrados = db.query(ConfigGlobal).filter(ConfigGlobal.clave == "partidos_cerrados").first()
+        if conf_cerrados:
+            conf_cerrados.valor = "[]"
+            
+        conf_finalizados = db.query(ConfigGlobal).filter(ConfigGlobal.clave == "partidos_finalizados").first()
+        if conf_finalizados:
+            conf_finalizados.valor = "[]"
+            
+        conf_knockout = db.query(ConfigGlobal).filter(ConfigGlobal.clave == "knockout_asignaciones").first()
+        if conf_knockout:
+            conf_knockout.valor = "{}"
+            
+        db.commit()
+        
+        return '''
+            <div style="background-color: #d1e7dd; color: #0f5132; padding: 15px; border-radius: 5px; margin-top: 15px; font-weight: bold;">
+                ⚠️ ✅ ¡RESULTADOS OFICIALES REINICIADOS! Las predicciones de los usuarios siguen intactas.
+            </div>
+            <script>setTimeout(() => window.location.reload(), 3000);</script>
+        '''
+    except Exception as e:
+        db.rollback()
+        return f"<div style='color:red;'>❌ Error al reiniciar: {str(e)}</div>"
+
+@router.post("/reiniciar_datos", response_class=HTMLResponse)
+async def reiniciar_datos(request: Request, db: Session = Depends(get_db)):
+    """Reinicia todo el torneo (predicciones, resultados oficiales y puntajes a cero)."""
+    username = get_current_user(request)
+    if username != "admin":
+        return "<div class='alert alert-danger'>Acceso denegado</div>"
+        
+    try:
+        from database.models import Prediccion, DatosOficiales, Usuario, ConfigGlobal
+        
+        # 1. Borrar todas las predicciones
+        db.query(Prediccion).delete()
+        
+        # 2. Borrar todos los resultados oficiales
+        db.query(DatosOficiales).delete()
+        
+        # 3. Restablecer los puntos de los usuarios a cero (sin borrarlos)
+        db.query(Usuario).update({Usuario.puntos_totales: 0})
+        
+        # 4. Restablecer estados de fases, partidos cerrados y eliminatorias en ConfigGlobal
+        estados_iniciales = {"Grupos": True, "Dieciseisavos": False, "Octavos": False, "Cuartos": False, "Semis": False, "Finales": False}
+        import json
+        
+        conf_fases = db.query(ConfigGlobal).filter(ConfigGlobal.clave == "fases_estado").first()
+        if conf_fases:
+            conf_fases.valor = json.dumps(estados_iniciales)
+            
+        conf_cerrados = db.query(ConfigGlobal).filter(ConfigGlobal.clave == "partidos_cerrados").first()
+        if conf_cerrados:
+            conf_cerrados.valor = "[]"
+            
+        conf_finalizados = db.query(ConfigGlobal).filter(ConfigGlobal.clave == "partidos_finalizados").first()
+        if conf_finalizados:
+            conf_finalizados.valor = "[]"
+            
+        conf_knockout = db.query(ConfigGlobal).filter(ConfigGlobal.clave == "knockout_asignaciones").first()
+        if conf_knockout:
+            conf_knockout.valor = "{}"
+            
+        db.commit()
+        
+        return '''
+            <div style="background-color: #d1e7dd; color: #0f5132; padding: 15px; border-radius: 5px; margin-top: 15px; font-weight: bold;">
+                ⚠️ ✅ ¡TORNEO REINICIADO CON ÉXITO! Las predicciones y puntajes han vuelto a CERO.
+            </div>
+            <script>setTimeout(() => window.location.reload(), 3000);</script>
+        '''
+    except Exception as e:
+        db.rollback()
+        return f"<div style='color:red;'>❌ Error al reiniciar: {str(e)}</div>"
+

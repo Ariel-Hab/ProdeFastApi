@@ -17,7 +17,7 @@
         }
 
         .container {
-            max-width: 800px;
+            max-width: 1200px;
             margin: auto;
             background: white;
             padding: 30px;
@@ -260,13 +260,7 @@
 <body>
 
     <div class="container">
-        <div
-            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #edf2f7; padding-bottom: 10px;">
-            <h1 style="margin: 0;">🛠️ Panel de Control</h1>
-            <a href="#" hx-post="/logout"
-                style="background-color: #e53e3e; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 0.9rem;">🚪
-                Cerrar Sesión</a>
-        </div>
+        <h1>🛠️ Panel de Control del Torneo</h1>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
             <!-- Columna Izquierda: Fases -->
@@ -314,7 +308,36 @@
 
             <!-- Columna Derecha: Banners -->
             <div>
-                <h2>Gestión de Banners (Slideshow)</h2>
+                <h2>Gestión de Banners (Auspiciantes Fijos)</h2>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px;">
+                    <div class="config-card" style="display: block; margin-bottom: 0; padding: 10px;">
+                        <h3 style="margin-top: 5px; font-size: 1rem;">Banner Login Superior</h3>
+                        <p style="font-size: 0.8em; margin-bottom: 5px;">Auspiciante principal del login.</p>
+                        <div id="resultado-banner-login" style="font-size: 0.8rem;"></div>
+                        <form hx-post="/admin/config/banner_login" hx-target="#resultado-banner-login"
+                            hx-encoding="multipart/form-data" style="margin-top: 10px;">
+                            <input type="file" name="image" accept="image/*" required
+                                style="max-width: 100%; font-size: 0.8rem;">
+                            <br><br>
+                            <button type="submit" style="font-size: 0.8rem; padding: 5px 10px;">Subir Banner</button>
+                        </form>
+                    </div>
+                    <div class="config-card" style="display: block; margin-bottom: 0; padding: 10px;">
+                        <h3 style="margin-top: 5px; font-size: 1rem;">Banner Footer General</h3>
+                        <p style="font-size: 0.8em; margin-bottom: 5px;">Publicidad que aparece debajo del fixture y el
+                            ranking.</p>
+                        <div id="resultado-banner-footer" style="font-size: 0.8rem;"></div>
+                        <form hx-post="/admin/config/banner_footer" hx-target="#resultado-banner-footer"
+                            hx-encoding="multipart/form-data" style="margin-top: 10px;">
+                            <input type="file" name="image" accept="image/*" required
+                                style="max-width: 100%; font-size: 0.8rem;">
+                            <br><br>
+                            <button type="submit" style="font-size: 0.8rem; padding: 5px 10px;">Subir Banner</button>
+                        </form>
+                    </div>
+                </div>
+
+                <h2 style="margin-top: 0;">Gestión de Banners (Slideshow)</h2>
                 <p>Sube imágenes para el carrusel principal. Se recomienda formato apaisado (16:9).</p>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
@@ -333,42 +356,9 @@
                         </form>
                     </div>
                     {% endfor %}
-                    <div class="config-card"
-                        style="display: block; margin-bottom: 0; padding: 10px; border-left: 4px solid #F2AB27;">
-                        <h3 style="margin-top: 5px; font-size: 1rem;">Banner Sponsor Login</h3>
-                        <div id="resultado-banner-login" style="font-size: 0.8rem;"></div>
-                        <form hx-post="/admin/config/banner" hx-target="#resultado-banner-login"
-                            hx-encoding="multipart/form-data" style="margin-top: 10px;">
-                            <input type="hidden" name="slot" value="login_sponsor">
-                            <input type="file" name="image" accept="image/*" required
-                                style="max-width: 100%; font-size: 0.8rem;">
-                            <br><br>
-                            <button type="submit"
-                                style="font-size: 0.8rem; padding: 5px 10px; background-color: #F2AB27; color: #102a68;">Subir
-                                Banner Login</button>
-                        </form>
-                    </div>
                 </div>
             </div>
         </div>
-
-        <!-- ZONA DE PELIGRO -->
-        <div
-            style="margin: 20px 0; padding: 20px; border: 2px solid #e53e3e; border-radius: 12px; background: #fff5f5; display: flex; align-items: center; justify-content: space-between; gap: 20px;">
-            <div style="flex: 1;">
-                <h2 style="color: #c53030; margin: 0; font-size: 1.2rem;">⚠️ Zona de Peligro</h2>
-                <p style="font-size: 0.85rem; color: #742a2a; margin: 5px 0 0 0;">Esta acción borrará todos los
-                    resultados cargados por el admin. Los puntos y predicciones de usuarios <b>se mantienen</b>.</p>
-            </div>
-            <div style="flex: 0 0 250px;">
-
-                <button onclick="confirmResetScores()"
-                    style="background-color: #e53e3e; width: 100%; padding: 12px; font-weight: bold; border-radius: 8px;">
-                    🔥 REINICIAR RESULTADOS
-                </button>
-            </div>
-        </div>
-        <div id="reset-result" style="margin-bottom: 20px; font-weight: bold; text-align: center;"></div>
 
         <hr>
 
@@ -379,8 +369,6 @@
         <!-- Pestañas de Fases -->
         <div class="tabs-header">
             <button class="tab-btn active" onclick="showTab('tab-grupos')">⚽ Grupos</button>
-            <button class="tab-btn" onclick="showTab('tab-ranking')">🏆 Ranking & Premios</button>
-            <button class="tab-btn" onclick="showTab('tab-reglas')">📜 Reglamento</button>
             {% for phase_key in knockout_por_fase.keys() %}
             <button class="tab-btn" onclick="showTab('tab-{{ phase_key|replace(' ', '-') }}')">
                 {{ phase_key }}
@@ -389,353 +377,216 @@
         </div>
 
         <div>
-            <!-- SECCIÓN RANKING & PREMIOS (NUEVA) -->
-            <div id="tab-ranking" class="tab-content">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
-                    <!-- Configuración de Texto -->
-                    <div>
-                        <h2>Configuración de Texto</h2>
-                        <div class="config-card" style="display: block;">
-                            <form hx-post="/admin/ranking/text" hx-target="#ranking-text-result">
-                                <div style="margin-bottom: 15px;">
-                                    <label style="display: block; font-weight: bold; margin-bottom: 5px;">Título del
-                                        Ranking:</label>
-                                    <input type="text" name="title" value="{{ ranking_config.title }}"
-                                        style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ddd;">
-                                </div>
-                                <div style="margin-bottom: 15px;">
-                                    <label style="display: block; font-weight: bold; margin-bottom: 5px;">Título de
-                                        Descripción (Emoji incl.):</label>
-                                    <input type="text" name="desc_title" value="{{ ranking_config.desc_title }}"
-                                        style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ddd;">
-                                </div>
-                                <div style="margin-bottom: 15px;">
-                                    <label style="display: block; font-weight: bold; margin-bottom: 5px;">Cuerpo de la
-                                        Descripción (soporta **negrita**):</label>
-                                    <textarea name="desc_body" rows="4"
-                                        style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ddd; font-family: inherit;">{{ ranking_config.desc_body }}</textarea>
-                                </div>
-                                <div id="ranking-text-result"></div>
-                                <button type="submit" class="save-btn" style="background-color: #102a68;">Guardar
-                                    Textos</button>
-                            </form>
-                        </div>
-                    </div>
-
-                    <!-- Gestión de Fotos de Premios -->
-                    <div>
-                        <h2>Fotos de Premios (Slideshow)</h2>
-                        <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">
-                            Subí 2 fotos por categoría (PNG/JPG). Tamaño recomendado: 350x260px.
-                        </p>
-
-                        <div style="display: grid; grid-template-columns: 1fr; gap: 15px;">
-                            {% for cat in [1, 2, 3] %}
-                            <div class="config-card"
-                                style="display: block; padding: 10px; border-left: 5px solid {% if cat==1 %}#d4af37{% elif cat==2 %}#a0aec0{% else %}#cd7f32{% endif %};">
-                                <h4 style="margin: 0 0 10px 0;">Categoría {{ cat }}° puesto</h4>
-                                <div style="display: flex; gap: 10px;">
-                                    {% for slot in [1, 2] %}
-                                    <div
-                                        style="flex: 1; border: 1px dashed #ccc; padding: 8px; border-radius: 6px; background: #fafafa;">
-                                        <div id="prize-result-{{ cat }}-{{ slot }}"
-                                            style="font-size: 0.75rem; min-height: 20px;">Slot {{ slot }}</div>
-                                        <form hx-post="/admin/ranking/prize-image"
-                                            hx-target="#prize-result-{{ cat }}-{{ slot }}"
-                                            hx-encoding="multipart/form-data">
-                                            <input type="hidden" name="category" value="{{ cat }}">
-                                            <input type="hidden" name="slot" value="{{ slot }}">
-                                            <input type="file" name="image" accept="image/*" required
-                                                style="font-size: 0.7rem; width: 100%; margin-bottom: 5px;">
-                                            <button type="submit"
-                                                style="font-size: 0.7rem; padding: 3px 8px; width: 100%;">Subir {{ slot
-                                                }}</button>
-                                        </form>
-                                    </div>
-                                    {% endfor %}
+            <!-- SECCIÓN GRUPOS (FIJO) -->
+            <div id="tab-grupos" class="tab-content active">
+                <div class="groups-grid">
+                    {% for fecha, partidos in partidos_agrupados_fecha.items() %}
+                    <div class="group-container" style="border-top: 5px solid #102a68; margin-bottom: 30px;">
+                        <div class="group-header">Grupos: Día {{ fecha }}</div>
+                        {% for p in partidos %}
+                        <div class="match-card" id="admin_card_{{ p.id }}">
+                            <div class="match-header-info">
+                                <div>
+                                    <span>📅 {{ p.fecha }}</span>
+                                    <span>🏟️ {{ p.sede }}</span>
                                 </div>
                             </div>
-                            {% endfor %}
-                        </div>
-
-                    </div>
-                </div>
-            </div>
-
-            <!-- SECCIÓN REGLAMENTO (NUEVA) -->
-            <div id="tab-reglas" class="tab-content">
-                <div
-                    style="background: white; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
-                    <h2>Gestión del Reglamento</h2>
-                    <p style="color: #666; margin-bottom: 20px;">Personalizá las reglas y premios que ven los usuarios.
-                        Podés añadir secciones y reglas individuales.</p>
-
-                    <div id="reglas-container">
-                        <!-- Aquí se renderizan las reglas vía JS -->
-                    </div>
-
-                    <div
-                        style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px; display: flex; gap: 10px;">
-                        <button onclick="addSection()" style="background: #38a169;">➕ Añadir Nueva Sección</button>
-                        <button onclick="saveReglas()" style="background: #102a68;">💾 Guardar Todo el
-                            Reglamento</button>
-                    </div>
-                    <div id="save-reglas-result" style="margin-top: 10px; font-weight: bold;"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- SECCIÓN GRUPOS (FIJO) -->
-        <div id="tab-grupos" class="tab-content active">
-            <div class="groups-grid">
-                {% for fecha, partidos in partidos_agrupados_fecha.items() %}
-                <div class="group-container" style="border-top: 5px solid #102a68; margin-bottom: 30px;">
-                    <div class="group-header">Grupos: Día {{ fecha }}</div>
-                    {% for p in partidos %}
-                    <div class="match-card" id="admin_card_{{ p.id }}">
-                        <div class="match-header-info">
-                            <div>
-                                <span>📅 {{ p.fecha }}</span>
-                                <span>🏟️ {{ p.sede }}</span>
-                            </div>
-                        </div>
-                        <div class="match-teams">
-                            <div class="team-block">
-                                <span class="team-flag">{{ p.bandera1 }}</span>
-                                <span class="team-name">{{ p.t1 }}</span>
-                            </div>
-                            <div class="vs-text">VS</div>
-                            <div class="team-block right">
-                                <span class="team-name">{{ p.t2 }}</span>
-                                <span class="team-flag">{{ p.bandera2 }}</span>
-                            </div>
-                        </div>
-                        <form hx-post="/admin/match/save" hx-target="#admin_result_{{ p.id }}">
-                            <input type="hidden" name="match_id" value="{{ p.id }}">
-                            <div class="predict-inputs">
-                                {% set off_data = resultados_dict.get(p.id, {}) %}
-                                <input type="number" name="g1" required min="0" value="{{ off_data.get('g1', '') }}">
-                                <span>-</span>
-                                <input type="number" name="g2" required min="0" value="{{ off_data.get('g2', '') }}">
-                            </div>
-
-                            <!-- Sección de Penales Estática para Grupos -->
-                            <div class="penalties-section" style="display: flex;">
+                            <div class="match-teams">
                                 <div class="team-block">
                                     <span class="team-flag">{{ p.bandera1 }}</span>
-                                    <input type="radio" name="winner" value="{{ p.t1 }}" {% if
-                                        off_data.get('winner')==p.t1 and p.t1 %}checked{% endif %}>
+                                    <span class="team-name">{{ p.t1 }}</span>
                                 </div>
-                                <div class="penalties-title">GANA EN<br>PENALES</div>
+                                <div class="vs-text">VS</div>
                                 <div class="team-block right">
-                                    <input type="radio" name="winner" value="{{ p.t2 }}" {% if
-                                        off_data.get('winner')==p.t2 and p.t2 %}checked{% endif %}>
+                                    <span class="team-name">{{ p.t2 }}</span>
                                     <span class="team-flag">{{ p.bandera2 }}</span>
                                 </div>
                             </div>
+                            <form hx-post="/admin/match/save" hx-target="#admin_result_{{ p.id }}">
+                                <input type="hidden" name="match_id" value="{{ p.id }}">
+                                <div class="predict-inputs">
+                                    {% set off_data = resultados_dict.get(p.id, {}) %}
+                                    <input type="number" name="g1" required min="0"
+                                        value="{{ off_data.get('g1', '') }}">
+                                    <span>-</span>
+                                    <input type="number" name="g2" required min="0"
+                                        value="{{ off_data.get('g2', '') }}">
+                                </div>
 
-                            <div id="admin_result_{{ p.id }}"></div>
-                            <button type="submit" class="save-btn">Guardar Resultado</button>
-                        </form>
-                        <form hx-post="/admin/match/lock" hx-target="#admin_result_{{ p.id }}">
-                            <input type="hidden" name="match_id" value="{{ p.id }}">
-                            <button type="submit" class="lock-btn">Bloquear Partido</button>
-                        </form>
+                                <!-- Sección de Penales Estática para Grupos -->
+                                <div class="penalties-section" style="display: flex;">
+                                    <div class="team-block">
+                                        <span class="team-flag">{{ p.bandera1 }}</span>
+                                        <input type="radio" name="winner" value="{{ p.t1 }}" {% if
+                                            off_data.get('winner')==p.t1 and p.t1 %}checked{% endif %}>
+                                    </div>
+                                    <div class="penalties-title">GANA EN<br>PENALES</div>
+                                    <div class="team-block right">
+                                        <input type="radio" name="winner" value="{{ p.t2 }}" {% if
+                                            off_data.get('winner')==p.t2 and p.t2 %}checked{% endif %}>
+                                        <span class="team-flag">{{ p.bandera2 }}</span>
+                                    </div>
+                                </div>
+
+                                <div id="admin_result_{{ p.id }}"></div>
+                                <button type="submit" class="save-btn">Guardar Resultado</button>
+                            </form>
+                            <form hx-post="/admin/match/lock" hx-target="#admin_result_{{ p.id }}">
+                                <input type="hidden" name="match_id" value="{{ p.id }}">
+                                <button type="submit" class="lock-btn">Bloquear Partido</button>
+                            </form>
+                        </div>
+                        {% endfor %}
                     </div>
                     {% endfor %}
                 </div>
-                {% endfor %}
             </div>
-        </div>
 
-        <!-- SECCIONES ELIMINATORIAS (DINÁMICAS) -->
-        {% for phase_key, partidos in knockout_por_fase.items() %}
-        <div id="tab-{{ phase_key|replace(' ', '-') }}" class="tab-content">
-            <div class="groups-grid">
-                <div class="group-container" style="border-top: 5px solid #102a68; margin-bottom: 30px;">
-                    <div class="group-header">Eliminatorias: {{ phase_key }}</div>
-                    {% for p in partidos %}
-                    <div class="match-card" id="admin_card_{{ p.id }}">
-                        <div class="match-header-info">
-                            <div>
-                                <span>📅 {{ p.fecha }}</span>
-                                <span>🏟️ {{ p.sede }}</span>
+            <!-- SECCIONES ELIMINATORIAS (DINÁMICAS) -->
+            {% for phase_key, partidos in knockout_por_fase.items() %}
+            <div id="tab-{{ phase_key|replace(' ', '-') }}" class="tab-content">
+                <div class="groups-grid">
+                    <div class="group-container" style="border-top: 5px solid #102a68; margin-bottom: 30px;">
+                        <div class="group-header">Eliminatorias: {{ phase_key }}</div>
+                        {% for p in partidos %}
+                        <div class="match-card" id="admin_card_{{ p.id }}">
+                            <div class="match-header-info">
+                                <div>
+                                    <span>📅 {{ p.fecha }}</span>
+                                    <span>🏟️ {{ p.sede }}</span>
+                                </div>
+                                <div id="status_badge_{{ p.id }}">
+                                    {% set asig = knockout_asignaciones.get(p.id) %}
+                                    {% if p.id in partidos_finalizados %}
+                                    <span
+                                        style="background-color: #1a73e8; color: white; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold;">🏁
+                                        FINALIZADO</span>
+                                    {% elif p.id in partidos_cerrados %}
+                                    <span
+                                        style="background-color: #dc3545; color: white; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold;">🔒
+                                        CERRADO</span>
+                                    {% elif asig %}
+                                    <span
+                                        style="background-color: #28a745; color: white; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold;">✅
+                                        ABIERTO</span>
+                                    {% else %}
+                                    <span
+                                        style="background-color: #6c757d; color: white; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold;">⏳
+                                        PENDIENTE</span>
+                                    {% endif %}
+                                </div>
                             </div>
-                            <div id="status_badge_{{ p.id }}">
-                                {% set asig = knockout_asignaciones.get(p.id) %}
-                                {% if p.id in partidos_finalizados %}
-                                <span
-                                    style="background-color: #1a73e8; color: white; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold;">🏁
-                                    FINALIZADO</span>
-                                {% elif p.id in partidos_cerrados %}
-                                <span
-                                    style="background-color: #dc3545; color: white; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold;">🔒
-                                    CERRADO</span>
-                                {% elif asig %}
-                                <span
-                                    style="background-color: #28a745; color: white; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold;">✅
-                                    ABIERTO</span>
-                                {% else %}
-                                <span
-                                    style="background-color: #6c757d; color: white; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold;">⏳
-                                    PENDIENTE</span>
-                                {% endif %}
-                            </div>
-                        </div>
 
-                        {% set asig = knockout_asignaciones.get(p.id) %}
-                        {% if not asig %}
-                        <!-- ETAPA 1: ASIGNACIÓN -->
-                        <form hx-post="/admin/knockout/assign" hx-target="#admin_result_{{ p.id }}">
-                            <input type="hidden" name="match_id" value="{{ p.id }}">
-                            <p style="font-size: 0.8rem; color: #666; margin-bottom: 5px; text-align: center;">{{
-                                p.desc }}</p>
-                            <div class="match-teams" style="gap: 5px;">
-                                <select name="t1" required style="flex: 1; padding: 5px; border-radius: 4px;">
-                                    <option value="">Seleccionar Equipo 1</option>
-                                    {% for c in countries %}
-                                    <option value="{{ c.name }}">{{ c.flag }} {{ c.name }}</option>
-                                    {% endfor %}
-                                </select>
-                                <div class="vs-text" style="font-size: 1rem;">VS</div>
-                                <select name="t2" required style="flex: 1; padding: 5px; border-radius: 4px;">
-                                    <option value="">Seleccionar Equipo 2</option>
-                                    {% for c in countries %}
-                                    <option value="{{ c.name }}">{{ c.flag }} {{ c.name }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <button type="submit" class="save-btn" style="background-color: #6c757d;">Guardar
-                                Selección</button>
-                        </form>
-                        {% else %}
-                        <!-- ETAPA 2, 3 o 4 -->
-                        <div class="match-teams">
-                            <div class="team-block">
-                                <span class="team-flag">{{ asig.bandera1 }}</span>
-                                <span class="team-name">{{ asig.t1 }}</span>
-                            </div>
-                            <div class="vs-text">VS</div>
-                            <div class="team-block right">
-                                <span class="team-name">{{ asig.t2 }}</span>
-                                <span class="team-flag">{{ asig.bandera2 }}</span>
-                            </div>
-                        </div>
-
-                        <!-- Botón y Formulario de Corrección -->
-                        {% if p.id not in partidos_finalizados %}
-                        <div style="text-align: center; margin-bottom: 10px;">
-                            <button type="button"
-                                onclick="document.getElementById('edit_teams_{{ p.id }}').style.display='block'; this.style.display='none';"
-                                style="background: none; border: none; color: #3182ce; font-size: 0.8rem; cursor: pointer; text-decoration: underline;">
-                                ✏️ Corregir Equipos
-                            </button>
-                        </div>
-
-                        <form id="edit_teams_{{ p.id }}"
-                            style="display: none; margin-bottom: 15px; padding: 10px; background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e0;"
-                            hx-post="/admin/knockout/assign" hx-target="#admin_result_{{ p.id }}">
-                            <input type="hidden" name="match_id" value="{{ p.id }}">
-                            <p
-                                style="font-size: 0.75rem; color: #e53e3e; margin-top: 0; text-align: center; font-weight: bold;">
-                                Cuidado: Sobrescribirás los equipos actuales.</p>
-                            <div class="match-teams" style="gap: 5px;">
-                                <select name="t1" required
-                                    style="flex: 1; padding: 5px; border-radius: 4px; font-size: 0.8rem;">
-                                    <option value="">Equipo 1</option>
-                                    {% for c in countries %}
-                                    <option value="{{ c.name }}" {% if c.name==asig.t1 %}selected{% endif %}>{{ c.flag
-                                        }} {{ c.name }}</option>
-                                    {% endfor %}
-                                </select>
-                                <div class="vs-text" style="font-size: 0.9rem;">VS</div>
-                                <select name="t2" required
-                                    style="flex: 1; padding: 5px; border-radius: 4px; font-size: 0.8rem;">
-                                    <option value="">Equipo 2</option>
-                                    {% for c in countries %}
-                                    <option value="{{ c.name }}" {% if c.name==asig.t2 %}selected{% endif %}>{{ c.flag
-                                        }} {{ c.name }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <button type="submit" class="save-btn"
-                                style="background-color: #3182ce; padding: 8px; font-size: 0.8rem; margin-top: 10px;"
-                                onclick="setTimeout(()=>window.location.reload(), 800)">Guardar Corrección</button>
-                            <button type="button"
-                                onclick="document.getElementById('edit_teams_{{ p.id }}').style.display='none'; this.parentElement.previousElementSibling.children[0].style.display='inline-block';"
-                                style="width: 100%; padding: 8px; font-size: 0.8rem; margin-top: 5px; background: #e2e8f0; border: none; border-radius: 4px; color: #4a5568; cursor: pointer;">Cancelar</button>
-                        </form>
-                        {% endif %}
-
-                        {% if p.id not in partidos_cerrados and p.id not in partidos_finalizados %}
-                        <!-- ETAPA 2: ABIERTO (Botón para cerrar) -->
-                        <form hx-post="/admin/match/lock" hx-target="#admin_result_{{ p.id }}">
-                            <input type="hidden" name="match_id" value="{{ p.id }}">
-                            <button type="submit" class="lock-btn">Cerrar Partido (Bloquear Predicciones)</button>
-                        </form>
-                        {% elif p.id in partidos_cerrados and p.id not in partidos_finalizados %}
-                        <!-- ETAPA 3: CERRADO (Cargar resultados y finalizar) -->
-                        <div id="form_stage3_{{ p.id }}">
-                            <div class="predict-inputs">
-                                {% set off_data = resultados_dict.get(p.id, {}) %}
-                                <input type="number" id="g1_{{ p.id }}" name="g1" required min="0"
-                                    value="{{ off_data.get('g1', '') }}">
-                                <span>-</span>
-                                <input type="number" id="g2_{{ p.id }}" name="g2" required min="0"
-                                    value="{{ off_data.get('g2', '') }}">
-                            </div>
-                            <div class="penalties-section" style="display: flex;">
+                            {% set asig = knockout_asignaciones.get(p.id) %}
+                            {% if not asig %}
+                            <!-- ETAPA 1: ASIGNACIÓN -->
+                            <form hx-post="/admin/knockout/assign" hx-target="#admin_result_{{ p.id }}">
+                                <input type="hidden" name="match_id" value="{{ p.id }}">
+                                <p style="font-size: 0.8rem; color: #666; margin-bottom: 5px; text-align: center;">{{
+                                    p.desc }}</p>
+                                <div class="match-teams" style="gap: 5px;">
+                                    <select name="t1" required style="flex: 1; padding: 5px; border-radius: 4px;">
+                                        <option value="">Seleccionar Equipo 1</option>
+                                        {% for c in countries %}
+                                        <option value="{{ c.name }}">{{ c.flag }} {{ c.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="vs-text" style="font-size: 1rem;">VS</div>
+                                    <select name="t2" required style="flex: 1; padding: 5px; border-radius: 4px;">
+                                        <option value="">Seleccionar Equipo 2</option>
+                                        {% for c in countries %}
+                                        <option value="{{ c.name }}">{{ c.flag }} {{ c.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <button type="submit" class="save-btn" style="background-color: #6c757d;">Guardar
+                                    Selección</button>
+                            </form>
+                            {% else %}
+                            <!-- ETAPA 2, 3 o 4 -->
+                            <div class="match-teams">
                                 <div class="team-block">
                                     <span class="team-flag">{{ asig.bandera1 }}</span>
-                                    <input type="radio" name="winner_{{ p.id }}" value="{{ asig.t1 }}" {% if
-                                        off_data.get('winner')==asig.t1 %}checked{% endif %}>
+                                    <span class="team-name">{{ asig.t1 }}</span>
                                 </div>
-                                <div class="penalties-title">GANA EN<br>PENALES</div>
+                                <div class="vs-text">VS</div>
                                 <div class="team-block right">
-                                    <input type="radio" name="winner_{{ p.id }}" value="{{ asig.t2 }}" {% if
-                                        off_data.get('winner')==asig.t2 %}checked{% endif %}>
+                                    <span class="team-name">{{ asig.t2 }}</span>
                                     <span class="team-flag">{{ asig.bandera2 }}</span>
                                 </div>
                             </div>
 
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
-                                <button type="button" class="save-btn" style="background-color: #28a745; margin-top: 0;"
-                                    hx-post="/admin/match/save"
-                                    hx-vals='js:{"match_id": "{{ p.id }}", "g1": document.getElementById("g1_{{ p.id }}").value, "g2": document.getElementById("g2_{{ p.id }}").value, "winner": document.querySelector("input[name=\u0027winner_{{ p.id }}\u0027]:checked")?.value || ""}'
-                                    hx-target="#admin_result_{{ p.id }}">
-                                    Guardar Resultados
-                                </button>
+                            {% if p.id not in partidos_cerrados and p.id not in partidos_finalizados %}
+                            <!-- ETAPA 2: ABIERTO (Botón para cerrar) -->
+                            <form hx-post="/admin/match/lock" hx-target="#admin_result_{{ p.id }}">
+                                <input type="hidden" name="match_id" value="{{ p.id }}">
+                                <button type="submit" class="lock-btn">Cerrar Partido (Bloquear Predicciones)</button>
+                            </form>
+                            {% elif p.id in partidos_cerrados and p.id not in partidos_finalizados %}
+                            <!-- ETAPA 3: CERRADO (Cargar resultados y finalizar) -->
+                            <div id="form_stage3_{{ p.id }}">
+                                <div class="predict-inputs">
+                                    {% set off_data = resultados_dict.get(p.id, {}) %}
+                                    <input type="number" id="g1_{{ p.id }}" name="g1" required min="0"
+                                        value="{{ off_data.get('g1', '') }}">
+                                    <span>-</span>
+                                    <input type="number" id="g2_{{ p.id }}" name="g2" required min="0"
+                                        value="{{ off_data.get('g2', '') }}">
+                                </div>
+                                <div class="penalties-section" style="display: flex;">
+                                    <div class="team-block">
+                                        <span class="team-flag">{{ asig.bandera1 }}</span>
+                                        <input type="radio" name="winner_{{ p.id }}" value="{{ asig.t1 }}" {% if
+                                            off_data.get('winner')==asig.t1 %}checked{% endif %}>
+                                    </div>
+                                    <div class="penalties-title">GANA EN<br>PENALES</div>
+                                    <div class="team-block right">
+                                        <input type="radio" name="winner_{{ p.id }}" value="{{ asig.t2 }}" {% if
+                                            off_data.get('winner')==asig.t2 %}checked{% endif %}>
+                                        <span class="team-flag">{{ asig.bandera2 }}</span>
+                                    </div>
+                                </div>
 
-                                <button type="button" class="save-btn" style="background-color: #1a73e8; margin-top: 0;"
-                                    hx-post="/admin/knockout/finish"
-                                    hx-vals='js:{"match_id": "{{ p.id }}", "g1": document.getElementById("g1_{{ p.id }}").value, "g2": document.getElementById("g2_{{ p.id }}").value, "winner": document.querySelector("input[name=\u0027winner_{{ p.id }}\u0027]:checked")?.value || ""}'
-                                    hx-target="#admin_result_{{ p.id }}">
-                                    Finalizar Evento
-                                </button>
+                                <div
+                                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+                                    <button type="button" class="save-btn"
+                                        style="background-color: #28a745; margin-top: 0;" hx-post="/admin/match/save"
+                                        hx-vals='js:{"match_id": "{{ p.id }}", "g1": document.getElementById("g1_{{ p.id }}").value, "g2": document.getElementById("g2_{{ p.id }}").value, "winner": document.querySelector("input[name=\u0027winner_{{ p.id }}\u0027]:checked")?.value || ""}'
+                                        hx-target="#admin_result_{{ p.id }}">
+                                        Guardar Resultados
+                                    </button>
+
+                                    <button type="button" class="save-btn"
+                                        style="background-color: #1a73e8; margin-top: 0;"
+                                        hx-post="/admin/knockout/finish"
+                                        hx-vals='js:{"match_id": "{{ p.id }}", "g1": document.getElementById("g1_{{ p.id }}").value, "g2": document.getElementById("g2_{{ p.id }}").value, "winner": document.querySelector("input[name=\u0027winner_{{ p.id }}\u0027]:checked")?.value || ""}'
+                                        hx-target="#admin_result_{{ p.id }}">
+                                        Finalizar Evento
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                        {% else %}
-                        <!-- ETAPA 4: FINALIZADO (Mostrar resultado estático) -->
-                        <div class="predict-inputs" style="background: #e9ecef; border: none;">
-                            {% set off_data = resultados_dict.get(p.id, {}) %}
-                            <span style="font-size: 1.5rem; font-weight: bold; color: #102a68;">{{
-                                off_data.get('g1') }} - {{ off_data.get('g2') }}</span>
-                        </div>
-                        {% if off_data.get('winner') %}
-                        <p style="text-align: center; font-weight: bold; color: #1a73e8; margin-top: 5px;">🏆
-                            Ganador: {{ off_data.get('winner') }}</p>
-                        {% endif %}
-                        {% endif %}
-                        {% endif %}
+                            {% else %}
+                            <!-- ETAPA 4: FINALIZADO (Mostrar resultado estático) -->
+                            <div class="predict-inputs" style="background: #e9ecef; border: none;">
+                                {% set off_data = resultados_dict.get(p.id, {}) %}
+                                <span style="font-size: 1.5rem; font-weight: bold; color: #102a68;">{{
+                                    off_data.get('g1') }} - {{ off_data.get('g2') }}</span>
+                            </div>
+                            {% if off_data.get('winner') %}
+                            <p style="text-align: center; font-weight: bold; color: #1a73e8; margin-top: 5px;">🏆
+                                Ganador: {{ off_data.get('winner') }}</p>
+                            {% endif %}
+                            {% endif %}
+                            {% endif %}
 
-                        <div id="admin_result_{{ p.id }}" style="margin-top: 10px;"></div>
+                            <div id="admin_result_{{ p.id }}" style="margin-top: 10px;"></div>
+                        </div>
+                        {% endfor %}
                     </div>
-                    {% endfor %}
                 </div>
             </div>
+            {% endfor %}
         </div>
-        {% endfor %}
-    </div>
     </div>
 
     <hr>
@@ -755,6 +606,115 @@
     </div>
 
     </div>
+
+    <hr>
+
+    <h2>🎁 Gestión de Premios</h2>
+    <p>Añade y configura los premios que verán los usuarios en su perfil y ranking.</p>
+
+    <div class="config-card" style="flex-direction: column; align-items: flex-start;">
+        <h3>Agregar Nuevo Premio</h3>
+        <div id="resultado-premio-add" style="width: 100%; margin-bottom: 15px;"></div>
+        <form hx-post="/admin/premio/add" hx-target="#resultado-premio-add" hx-encoding="multipart/form-data"
+            style="width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div>
+                <label style="font-weight: bold; font-size: 0.9em;">Nombre del Premio</label><br>
+                <input type="text" name="nombre" required style="width: 100%; padding: 8px; margin-top: 5px;"
+                    placeholder="Ej: Play 5">
+            </div>
+            <div>
+                <label style="font-weight: bold; font-size: 0.9em;">Descripción (Opcional)</label><br>
+                <input type="text" name="descripcion" style="width: 100%; padding: 8px; margin-top: 5px;"
+                    placeholder="Ej: Consola Sony Playstation 5">
+            </div>
+            <div>
+                <label style="font-weight: bold; font-size: 0.9em;">Puntos Requeridos</label><br>
+                <input type="number" name="puntos_requeridos" required min="0"
+                    style="width: 100%; padding: 8px; margin-top: 5px;" placeholder="Ej: 500">
+            </div>
+            <div>
+                <label style="font-weight: bold; font-size: 0.9em;">Orden en la Lista</label><br>
+                <input type="number" name="orden" required value="0"
+                    style="width: 100%; padding: 8px; margin-top: 5px;">
+            </div>
+            <div style="grid-column: span 2;">
+                <label style="font-weight: bold; font-size: 0.9em;">Imagen del Premio</label><br>
+                <input type="file" name="image" accept="image/*" required style="margin-top: 5px;">
+            </div>
+            <div style="grid-column: span 2; text-align: right;">
+                <button type="submit" style="background-color: #1a73e8;">➕ Añadir Premio</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Lista de premios cargados -->
+    <div
+        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px; margin-bottom: 30px;">
+        {% for premio in premios %}
+        <div
+            style="border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; background: white; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+            <div
+                style="height: 150px; background-color: #f8fafc; display: flex; align-items: center; justify-content: center;">
+                <img src="{{ premio.imagen_url }}" alt="{{ premio.nombre }}"
+                    style="max-height: 100%; max-width: 100%; object-fit: contain;">
+            </div>
+            <div style="padding: 15px;">
+                <h4 style="margin: 0; color: #102a68;">{{ premio.nombre }}</h4>
+                <p style="margin: 5px 0; font-size: 0.8em; color: #64748b;">{{ premio.descripcion }}</p>
+                <p style="margin: 10px 0; font-weight: bold; color: #e53e3e;">{{ premio.puntos_requeridos }} Pts</p>
+                <form hx-post="/admin/premio/delete"
+                    onsubmit="return confirm('¿Estás seguro de eliminar este premio?');">
+                    <input type="hidden" name="premio_id" value="{{ premio.id }}">
+                    <button type="submit" style="background-color: #dc3545; width: 100%; padding: 5px;">🗑️
+                        Eliminar</button>
+                </form>
+            </div>
+        </div>
+        {% else %}
+        <p style="color: gray; font-style: italic;">No hay premios cargados todavía.</p>
+        {% endfor %}
+    </div>
+
+    <hr style="border-top: 2px dashed #e53e3e; margin: 40px 0;">
+
+    <h2 style="color: #c53030;">⚠️ Zona de Peligro</h2>
+    <p style="color: #c53030; font-weight: 500;">Opciones destructivas para el torneo. Úsalas con extrema precaución.
+    </p>
+
+    <div style="display: flex; flex-direction: column; gap: 15px;">
+        <div class="config-card" style="border-color: #fbd38d; background-color: #fffff0; margin-bottom: 0;">
+            <div>
+                <h3 style="color: #dd6b20; margin-top: 0;">🧹 Reiniciar Resultados Oficiales</h3>
+                <p style="font-size: 0.85em; color: #dd6b20;">
+                    Borra <strong>SOLO los resultados oficiales de los partidos reales</strong> y vuelve los puntajes a
+                    cero.<br>
+                    <strong>Las predicciones de los usuarios se conservarán intactas.</strong>
+                </p>
+                <div id="resultado-reinicio-parcial"></div>
+            </div>
+            <form hx-post="/admin/reiniciar_oficiales" hx-target="#resultado-reinicio-parcial" hx-swap="innerHTML"
+                onsubmit="return confirm('¿Seguro que deseas borrar solo los resultados cargados?\n\nLos puntajes se resentearán a 0 pero las predicciones de los usuarios NO SE BORRARÁN.');">
+                <button type="submit" style="background-color: #dd6b20; font-weight: bold;">🧹 Limpiar
+                    Oficiales</button>
+            </form>
+        </div>
+
+        <div class="config-card" style="border-color: #feb2b2; background-color: #fff5f5; margin-bottom: 0;">
+            <div>
+                <h3 style="color: #c53030; margin-top: 0;">🛑 Reiniciar Torneo Completo</h3>
+                <p style="font-size: 0.85em; color: #c53030;">
+                    Borra todas las predicciones de los usuarios, limpia los resultados oficiales, y pone todos los
+                    puntos a 0. <br>
+                    <strong>Atención:</strong> Las cuentas de los usuarios no se borrarán.
+                </p>
+                <div id="resultado-reinicio"></div>
+            </div>
+            <form hx-post="/admin/reiniciar_datos" hx-target="#resultado-reinicio" hx-swap="innerHTML"
+                onsubmit="return confirm('¡ADVERTENCIA!\n\nEstás a punto de borrar todas las predicciones y poner todos los puntajes a 0.\n\nEsta acción es irreversible. ¿Deseas continuar?');">
+                <button type="submit" style="background-color: #e53e3e; font-weight: bold;">☢️ Ejecutar Reinicio
+                    Total</button>
+            </form>
+        </div>
 
     </div>
 
@@ -827,136 +787,6 @@
                 }
             });
         });
-
-        // --- LÓGICA DEL REGLAMENTO DINÁMICO ---
-        let reglasData = {{ reglas_dinamicas | tojson | safe }};
-
-        function renderReglas() {
-            const container = document.getElementById('reglas-container');
-            container.innerHTML = '';
-
-            reglasData.forEach((section, sIdx) => {
-                const sDiv = document.createElement('div');
-                sDiv.className = 'config-card';
-                sDiv.style.display = 'block';
-                sDiv.style.borderLeft = '6px solid #102a68';
-                sDiv.style.marginBottom = '30px';
-                sDiv.style.position = 'relative';
-
-                sDiv.innerHTML = `
-                    <button onclick="removeSection(${sIdx})" style="position:absolute; top:10px; right:10px; background:#e53e3e; padding:5px 10px; font-size:0.7rem;">Eliminar Sección</button>
-                    <div style="margin-bottom:15px;">
-                        <label style="font-weight:bold;">Título de Sección:</label>
-                        <input type="text" value="${section.title}" onchange="updateSectionTitle(${sIdx}, this.value)" style="width:80%; padding:5px; margin-left:10px;">
-                    </div>
-                    <div id="section-items-${sIdx}" style="display:flex; flex-direction:column; gap:10px;">
-                    </div>
-                    <button onclick="addRule(${sIdx})" style="margin-top:15px; font-size:0.8rem; background:#4a5568;">➕ Añadir Regla</button>
-                `;
-
-                const itemsContainer = sDiv.querySelector(`#section-items-${sIdx}`);
-                section.items.forEach((item, iIdx) => {
-                    const iDiv = document.createElement('div');
-                    iDiv.style = "background:#f8fafc; padding:10px; border-radius:8px; border:1px solid #edf2f7; display:grid; grid-template-columns: 50px 1fr 50px; gap:10px; align-items:center;";
-                    iDiv.innerHTML = `
-                        <input type="text" value="${item.icon}" onchange="updateItem(${sIdx}, ${iIdx}, 'icon', this.value)" style="text-align:center; padding:5px;">
-                        <div>
-                            <input type="text" value="${item.title}" onchange="updateItem(${sIdx}, ${iIdx}, 'title', this.value)" style="width:100%; font-weight:bold; margin-bottom:5px; padding:5px;" placeholder="Título">
-                            <textarea onchange="updateItem(${sIdx}, ${iIdx}, 'desc', this.value)" style="width:100%; font-size:0.85rem; padding:5px;" rows="2" placeholder="Descripción">${item.desc}</textarea>
-                        </div>
-                        <button onclick="removeRule(${sIdx}, ${iIdx})" style="background:#feb2b2; color:#c53030; padding:5px;">🗑️</button>
-                    `;
-                    itemsContainer.appendChild(iDiv);
-                });
-
-                container.appendChild(sDiv);
-            });
-        }
-
-        function updateSectionTitle(sIdx, val) { reglasData[sIdx].title = val; }
-        function updateItem(sIdx, iIdx, key, val) { reglasData[sIdx].items[iIdx][key] = val; }
-
-        function addSection() {
-            reglasData.push({ title: "Nueva Sección", items: [] });
-            renderReglas();
-        }
-
-        function removeSection(sIdx) {
-            if (confirm("¿Seguro que querés eliminar toda esta sección?")) {
-                reglasData.splice(sIdx, 1);
-                renderReglas();
-            }
-        }
-
-        function addRule(sIdx) {
-            reglasData[sIdx].items.push({ icon: "📋", title: "Nueva Regla", desc: "Descripción de la regla..." });
-            renderReglas();
-        }
-
-        function removeRule(sIdx, iIdx) {
-            reglasData[sIdx].items.splice(iIdx, 1);
-            renderReglas();
-        }
-
-        async function saveReglas() {
-            const btn = event.target;
-            const resDiv = document.getElementById('save-reglas-result');
-            btn.disabled = true;
-            resDiv.innerText = "⏳ Guardando...";
-
-            try {
-                const response = await fetch('/admin/reglas/save', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(reglasData)
-                });
-                const result = await response.json();
-                if (result.status === "success") {
-                    resDiv.style.color = "#38a169";
-                    resDiv.innerText = "✅ ¡Guardado con éxito!";
-                } else {
-                    resDiv.style.color = "#e53e3e";
-                    resDiv.innerText = "❌ Error: " + result.message;
-                }
-            } catch (err) {
-                resDiv.style.color = "#e53e3e";
-                resDiv.innerText = "❌ Error de conexión";
-            } finally {
-                btn.disabled = false;
-                setTimeout(() => { resDiv.innerText = ""; }, 3000);
-            }
-        }
-
-        async function confirmResetScores() {
-            const firstConfirm = confirm("⚠️ ¿ESTÁS SEGURO?\n\nEsta acción borrará todos los goles oficiales cargados, vaciará el podio y pondrá los puntos de todos los usuarios en CERO.\n\n¿Deseas continuar?");
-            if (!firstConfirm) return;
-
-            const secondConfirm = confirm("🚨 ¡ÚLTIMA ADVERTENCIA!\n\nNo hay vuelta atrás. Todos los datos de resultados se perderán para siempre.\n\n¿Realmente deseas REINICIAR TODO?");
-            if (!secondConfirm) return;
-
-            const resDiv = document.getElementById('reset-result');
-            resDiv.innerText = "⏳ Procesando reinicio total...";
-            resDiv.style.color = "#102a68";
-
-            try {
-                const response = await fetch('/admin/reset-scores', { method: 'POST' });
-                const result = await response.json();
-                if (result.status === "success") {
-                    resDiv.style.color = "#38a169";
-                    resDiv.innerText = "✅ " + result.message;
-                    setTimeout(() => { location.reload(); }, 2000);
-                } else {
-                    resDiv.style.color = "#e53e3e";
-                    resDiv.innerText = "❌ Error: " + result.message;
-                }
-            } catch (err) {
-                resDiv.style.color = "#e53e3e";
-                resDiv.innerText = "❌ Error de conexión";
-            }
-        }
-
-        // Inicializar
-        renderReglas();
     </script>
 </body>
 

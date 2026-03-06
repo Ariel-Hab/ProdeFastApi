@@ -6,21 +6,48 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reglamento - Prode Mundial 2026</title>
     <link href="/static/css/style.css" rel="stylesheet">
-    <!-- Incluir HTMX desde CDN -->
-    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #f7f9fb;
             color: #31333F;
             margin: 0;
-            padding: 0;
+            padding: 20px;
         }
 
         .container {
             max-width: 900px;
             margin: 0 auto;
-            padding: 30px 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: #102a68;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .navbar a {
+            text-decoration: none;
+            color: #3182ce;
+            font-weight: 600;
+            padding: 8px 16px;
+            border-radius: 6px;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s;
+        }
+
+        .navbar a:hover {
+            background: #ebf8ff;
+            transform: translateY(-1px);
         }
 
         .content-card {
@@ -67,132 +94,80 @@
             display: block;
             margin-bottom: 5px;
         }
-
-        /* Fixed Sponsor Banner */
-        .sponsor-footer {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 100px;
-            background-color: #000;
-            z-index: 1000;
-            box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.2);
-            overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            visibility: visible !important;
-        }
-
-        .sponsor-footer img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            max-width: 1920px;
-        }
-
-        .app-layout {
-            margin-bottom: 120px;
-            /* Space for footer */
-        }
-
-        .top-app-bar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .top-app-bar-left,
-        .top-app-bar-right {
-            display: flex;
-            align-items: center;
-            flex: 1;
-        }
-
-        .top-app-bar-right {
-            justify-content: flex-end;
-        }
-
-        @media (max-width: 1100px) {
-            .app-layout {
-                padding: 0 20px;
-            }
-        }
     </style>
 </head>
 
 <body>
-    <div class="top-app-bar">
-        <div class="top-app-bar-left">
-            <button class="menu-trigger-btn" onclick="toggleSidebar()">☰</button>
-            <div class="top-app-title" style="color: white; font-weight: 800;">📜 REGLAMENTO Y PREMIOS</div>
-        </div>
-        <div class="top-app-bar-right">
-            <a href="/" class="volver-btn"
-                style="color: white; text-decoration: none; background: rgba(255,255,255,0.1); padding: 8px 15px; border-radius: 8px; font-weight: 600;">🏠
-                Volver</a>
-        </div>
-    </div>
 
-    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
-
-    <div class="sidebar" id="app-sidebar">
-        <button class="close-btn" onclick="toggleSidebar()">✕</button>
-        <div class="user-card">
-            <div class="user-avatar">👤</div>
-            <div class="user-name">{{ username }}</div>
-            <div class="user-stats">
-                <span class="stat-badge pts">⭐ {{ sidebar_data.puntos }} pts</span>
-                <span class="stat-badge rank">🏆 Posición: {{ sidebar_data.posicion }}°</span>
-            </div>
+    <div class="container">
+        <div class="header">
+            <h1>📜 Generalidades y Reglas</h1>
+            <p>Todo lo que necesitas saber sobre el torneo.</p>
         </div>
 
-        <nav class="sidebar-nav">
+        <div class="navbar">
             <a href="/">🏠 Mis Predicciones</a>
-            <a href="/fixture">🗓️ Fixture Mundial</a>
             <a href="/ranking">📈 Ranking Global</a>
-            <a href="/perfil">🎁 Elegí tus Premios</a>
-            <a href="/reglas" class="active">📜 Reglas</a>
-            <a href="#" hx-post="/logout" class="logout-btn">🚪 Salir</a>
-        </nav>
-    </div>
+            <a href="/fixture">🗓️ Fixture Mundial</a>
+            <a href="/perfil">👤 Mi Perfil</a>
+        </div>
 
-    <div class="app-layout">
-        <main class="container">
-            <div style="text-align: center; margin-bottom: 2rem; color: #102a68;">
-                <h1 style="font-weight: 800; margin-bottom: 0.5rem;">📜 Reglamento Oficial</h1>
-                <p style="color: #718096;">Descubrí cómo sumar puntos y cuáles son los premios en juego.</p>
-            </div>
+        <div class="content-card">
+            <h2>Puntajes Regulares</h2>
 
-            {% for section in reglas_dinamicas %}
-            <div class="content-card">
-                <h2 style="font-weight: 800; color: #102a68;">{{ section.title }}</h2>
-
-                {% for item in section['items'] %}
-                <div class="rule-item">
-                    <div class="rule-icon">{{ item.icon }}</div>
-                    <div class="rule-text">
-                        <strong style="color: #102a68; font-weight: 700;">{{ item.title }}</strong>
-                        <p>{{ item.desc }}</p>
-                    </div>
+            <div class="rule-item">
+                <div class="rule-icon">🎯</div>
+                <div class="rule-text">
+                    <strong>Marcador Exacto (6 Puntos)</strong>
+                    <p>Si aciertas exactamente los goles que hace cada equipo, ganas el máximo de puntos. (Ej: Predices
+                        2-1 y el partido sale 2-1).</p>
                 </div>
-                {% endfor %}
             </div>
-            {% endfor %}
-        </main>
+
+            <div class="rule-item">
+                <div class="rule-icon">🤝</div>
+                <div class="rule-text">
+                    <strong>Acierto de Tendencia (3 Puntos)</strong>
+                    <p>Si aciertas quién gana (o el empate) pero no el resultado exacto, sumas 3 puntos. (Ej: Predices
+                        2-0 y el partido sale 1-0).</p>
+                </div>
+            </div>
+
+            <div class="rule-item">
+                <div class="rule-icon">⚖️</div>
+                <div class="rule-text">
+                    <strong>Bonus de Penales (+1 Punto)</strong>
+                    <p>En caso de acertar un empate durante las rondas KO, si también adivinas quién gana en los tiros
+                        desde el punto penal, obtienes un punto extra.</p>
+                </div>
+            </div>
+
+            <div class="rule-item">
+                <div class="rule-icon">✖️</div>
+                <div class="rule-text">
+                    <strong>Multiplicadores de Fase</strong>
+                    <p>Los puntos base se multiplican según la importancia del partido: Grupos (x1), Dieciseisavos
+                        (x1.25), Octavos (x1.5), Cuartos (x2.0), Semifinales (x3.0), Final (x4.0).</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-card" style="border-top-color: #d4af37;">
+            <h2>Premios Oficiales 🏆</h2>
+            <p>Los premios serán entregados a los tres primeros lugares de la tabla al finalizar el Mundial 2026.</p>
+            <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 20px;">
+                <div
+                    style="flex: 1; min-width: 250px; background: #fffdf5; border: 1px solid #ecc94b; border-radius: 8px; padding: 20px; text-align: center;">
+                    <h3 style="color: #b7791f; margin-top:0;">🥇 1° Puesto</h3>
+                    <p style="font-size: 1.2rem; font-weight: bold; color: #2d3748;">Apple iPhone 16 Pro Max</p>
+                    <p style="color: #718096; font-size: 0.9rem;">+ Trofeo Oficial del Torneo.</p>
+                </div>
+                <!-- Añadir más premios en el futuro -->
+            </div>
+        </div>
+
     </div>
 
-    <footer class="sponsor-footer">
-        <img src="/static/banner/sponsor_banner.jpg?v={{ cache_buster }}" alt="Sponsors">
-    </footer>
-
-    <script>
-        function toggleSidebar() {
-            document.getElementById('app-sidebar').classList.toggle('open');
-            document.querySelector('.sidebar-overlay').classList.toggle('open');
-        }
-    </script>
 </body>
 
 </html>
